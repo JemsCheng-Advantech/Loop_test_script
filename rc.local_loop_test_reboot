@@ -1,0 +1,80 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          rc.local
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Run /etc/rc.local if it exist
+### END INIT INFO
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+do_start() {
+	if [ -x /etc/rc.local ]; then
+		echo -n "Running local boot scripts (/etc/rc.local)"
+		/etc/rc.local
+		[ $? = 0 ] && echo "." || echo "error"
+		return $ES
+	fi
+}
+
+case "$1" in
+    start)
+	do_start
+        ;;
+    restart|reload|force-reload)
+        echo "Error: argument '$1' not supported" >&2
+        exit 3
+        ;;
+    stop)
+        ;;
+    *)
+        echo "Usage: $0 start|stop" >&2
+        exit 3
+        ;;
+esac
+
+echo "----------------- USB Memory Stick Check -----------"
+date_time="`date '+%Y-%m-%d %H:%M:%S'`";
+read -n 1 -t 5 -p "INPUT:" var
+sleep 5
+
+cd /etc/init.d/
+if [ "$var" = "0" ];then
+	echo " then 0 clear"
+	cat /dev/null > testlog
+	echo "Clear Test Count"
+        cat testlog
+	cat /dev/null > testcnt
+	cat testcnt
+	exit
+else
+	echo "else NOT 0"
+
+  if [ "$var" = "9" ];then 
+        echo " then 9 exit"
+        exit
+  else  
+        echo " else NOT 0:clear and 9:exit"
+        sleep 3
+  fi          
+
+  if ! df -h | grep -q "/run/media/sda1";then
+        echo "################################"
+        echo "########### BAD BAD Board ######"
+        echo "################################"
+        echo $date_time "USB_Memory_Stick_Mount: BAD" >> testlog
+        wc -l testlog > testcnt
+        exit
+   else
+        echo "-------------------------------"
+        echo "---------- GOOD GOOD Board ----"
+        echo "-------------------------------"
+        echo $date_time "USB_Memory_Stick_Mount: OK" >> testlog
+        wc -l testlog > testcnt
+        reboot
+   fi
+fi
+
+
